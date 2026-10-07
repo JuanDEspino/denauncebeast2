@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35913.81 d17.13
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "denauncebeast2.API", "denauncebeast2.API\denauncebeast2.API.csproj", "{1093B065-BD4D-4B41-BFFF-3BC271AA4C7B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1093B065-BD4D-4B41-BFFF-3BC271AA4C7B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1093B065-BD4D-4B41-BFFF-3BC271AA4C7B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1093B065-BD4D-4B41-BFFF-3BC271AA4C7B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1093B065-BD4D-4B41-BFFF-3BC271AA4C7B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D2E1FF27-6CDE-4E52-B9FB-E153544DD559}
+	EndGlobalSection
+EndGlobal
