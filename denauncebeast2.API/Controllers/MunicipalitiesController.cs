@@ -81,5 +81,16 @@ namespace denauncebeast2.API.Controllers
             _municipalities.Remove(existing);
             return NoContent();
         }
+
+        public static bool Exists(int id)
+        {
+            return _municipalities.Any(m => m.Id == id && m.IsActive);
+        }
+
+        public static string GetMunicipalityName(int id)
+        {
+            var mun = _municipalities.FirstOrDefault(m => m.Id == id);
+            return mun != null ? mun.Name : "Desconocido";
+        }
     }
 }
