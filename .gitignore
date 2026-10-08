@@ -426,3 +426,5 @@ FodyWeavers.xsd
 
 # Official VS Code C# Dev Kit Extension exclusion
 #*.lscache
+/denauncebeast2/denauncebeast2.API
+/denauncebeast2/denauncebeast2.sln
