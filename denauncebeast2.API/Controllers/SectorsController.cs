@@ -1,9 +1,8 @@
 ﻿
-using denauncebeast2.API.Models.DTOs;
+using denauncebeast2.API.Data;
 using denauncebeast2.API.Models.Entities;
 using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
-using System.Linq;
+using Microsoft.EntityFrameworkCore;
 
 namespace denauncebeast2.API.Controllers
 {
@@ -11,112 +10,95 @@ namespace denauncebeast2.API.Controllers
     [Route("api/sectors")]
     public class SectorsController : ControllerBase
     {
-        private static readonly List<Sector> _sectors = new List<Sector>
+        private readonly DataContext _context;
+
+        public SectorsController(DataContext context)
         {
-            new Sector { Id = 1, Name = "Zona Colonial", MunicipalityId = 1, IsActive = true },
-            new Sector { Id = 2, Name = "Gascue", MunicipalityId = 1, IsActive = true },
-            new Sector { Id = 3, Name = "Cienfuegos", MunicipalityId = 2, IsActive = true }
-        };
+            _context = context;
+        }
 
         [HttpGet]
-        public ActionResult<IEnumerable<SectorDto>> GetAll()
+        public async Task<ActionResult<IEnumerable<Sector>>> GetAll()
         {
-            var response = _sectors.Select(s => new SectorDto
-            {
-                Id = s.Id,
-                Name = s.Name,
-                MunicipalityId = s.MunicipalityId,
-                MunicipalityName = MunicipalitiesController.GetMunicipalityName(s.MunicipalityId),
-                IsActive = s.IsActive
-            });
-
-            return Ok(response);
+            var sectors = await _context.Sectors.ToListAsync();
+            return Ok(sectors);
         }
 
         [HttpGet("{id}")]
-        public ActionResult<SectorDto> GetById(int id)
+        public async Task<ActionResult<Sector>> GetById(int id)
         {
-            var sector = _sectors.FirstOrDefault(s => s.Id == id);
+            var sector = await _context.Sectors.FindAsync(id);
             if (sector == null)
             {
                 return NotFound();
             }
-
-            var dto = new SectorDto
-            {
-                Id = sector.Id,
-                Name = sector.Name,
-                MunicipalityId = sector.MunicipalityId,
-                MunicipalityName = MunicipalitiesController.GetMunicipalityName(sector.MunicipalityId),
-                IsActive = sector.IsActive
-            };
-
-            return Ok(dto);
+            return Ok(sector);
         }
 
         [HttpPost]
-        public ActionResult<SectorDto> Create(CreateSectorDto createDto)
+        public async Task<ActionResult<Sector>> Create(Sector sector)
         {
-            // Validar que el municipio exista
-            if (!MunicipalitiesController.Exists(createDto.MunicipalityId))
+            if (string.IsNullOrWhiteSpace(sector.Name))
             {
-                return BadRequest($"El municipio con ID {createDto.MunicipalityId} no existe.");
+                return BadRequest("Name of sector is required.");
             }
 
-            int newId = _sectors.Any() ? _sectors.Max(s => s.Id) + 1 : 1;
-
-            var sector = new Sector
+            // Validar que el municipio exista en la base de datos antes de asociarlo
+            var municipalityExists = await _context.Municipalities.AnyAsync(m => m.Id == sector.MunicipalityId && m.IsActive);
+            if (!municipalityExists)
             {
-                Id = newId,
-                Name = createDto.Name,
-                MunicipalityId = createDto.MunicipalityId,
-                IsActive = true
-            };
+                return BadRequest("The specified municipality does not exist or is inactive.");
+            }
 
-            _sectors.Add(sector);
+            sector.IsActive = true;
 
-            var sectorDto = new SectorDto
-            {
-                Id = sector.Id,
-                Name = sector.Name,
-                MunicipalityId = sector.MunicipalityId,
-                MunicipalityName = MunicipalitiesController.GetMunicipalityName(sector.MunicipalityId),
-                IsActive = sector.IsActive
-            };
+            _context.Sectors.Add(sector);
+            await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetById), new { id = sector.Id }, sectorDto);
+            return CreatedAtAction(
+                nameof(GetById),
+                new { id = sector.Id },
+                sector
+            );
         }
 
         [HttpPut("{id}")]
-        public IActionResult Update(int id, CreateSectorDto updateDto)
+        public async Task<IActionResult> Update(int id, Sector sector)
         {
-            var existing = _sectors.FirstOrDefault(s => s.Id == id);
+            var existing = await _context.Sectors.FindAsync(id);
             if (existing == null)
             {
                 return NotFound();
             }
 
-            if (!MunicipalitiesController.Exists(updateDto.MunicipalityId))
+            var municipalityExists = await _context.Municipalities.AnyAsync(m => m.Id == sector.MunicipalityId && m.IsActive);
+            if (!municipalityExists)
             {
-                return BadRequest($"El municipio con ID {updateDto.MunicipalityId} no existe.");
+                return BadRequest("The specified municipality does not exist or is inactive.");
             }
 
-            existing.Name = updateDto.Name;
-            existing.MunicipalityId = updateDto.MunicipalityId;
+            existing.Name = sector.Name;
+            existing.MunicipalityId = sector.MunicipalityId;
+            existing.IsActive = sector.IsActive;
+
+            _context.Sectors.Update(existing);
+            await _context.SaveChangesAsync();
 
             return NoContent();
         }
 
         [HttpDelete("{id}")]
-        public IActionResult Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
-            var existing = _sectors.FirstOrDefault(s => s.Id == id);
+            var existing = await _context.Sectors.FindAsync(id);
             if (existing == null)
             {
                 return NotFound();
             }
 
-            _sectors.Remove(existing);
+            _context.Sectors.Remove(existing);
+            await _context.SaveChangesAsync();
+
             return NoContent();
         }
     }
