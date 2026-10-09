@@ -1,6 +1,7 @@
-﻿using denauncebeast2.API.Models.Entities;
+﻿using denauncebeast2.API.Data;
+using denauncebeast2.API.Models.Entities;
 using Microsoft.AspNetCore.Mvc;
-using System.Linq;
+using Microsoft.EntityFrameworkCore;
 
 namespace denauncebeast2.API.Controllers
 {
@@ -8,23 +9,24 @@ namespace denauncebeast2.API.Controllers
     [Route("api/municipalities")]
     public class MunicipalitiesController : ControllerBase
     {
-        private static readonly List<Municipality> _municipalities = new List<Municipality>
+        private readonly DataContext _context;
+
+        public MunicipalitiesController(DataContext context)
         {
-            new Municipality { Id = 1, Name = "Santo Domingo", PostalCode = "10101", IsActive = true },
-            new Municipality { Id = 2, Name = "Santiago de los Caballeros", PostalCode = "51000", IsActive = true },
-            new Municipality { Id = 3, Name = "Puerto Plata", PostalCode = "57000", IsActive = true }
-        };
+            _context = context;
+        }
 
         [HttpGet]
-        public ActionResult<IEnumerable<Municipality>> GetAll()
+        public async Task<ActionResult<IEnumerable<Municipality>>> GetAll()
         {
-            return Ok(_municipalities);
+            var municipalities = await _context.Municipalities.ToListAsync();
+            return Ok(municipalities);
         }
 
         [HttpGet("{id}")]
-        public ActionResult<Municipality> GetById(int id)
+        public async Task<ActionResult<Municipality>> GetById(int id)
         {
-            var municipality = _municipalities.FirstOrDefault(m => m.Id == id);
+            var municipality = await _context.Municipalities.FindAsync(id);
             if (municipality == null)
             {
                 return NotFound();
@@ -33,18 +35,17 @@ namespace denauncebeast2.API.Controllers
         }
 
         [HttpPost]
-        public ActionResult<Municipality> Create(Municipality municipality)
+        public async Task<ActionResult<Municipality>> Create(Municipality municipality)
         {
             if (string.IsNullOrWhiteSpace(municipality.Name))
             {
                 return BadRequest("Name of municipality is required.");
             }
 
-            int newId = _municipalities.Any() ? _municipalities.Max(m => m.Id) + 1 : 1;
-            municipality.Id = newId;
             municipality.IsActive = true;
 
-            _municipalities.Add(municipality);
+            _context.Municipalities.Add(municipality);
+            await _context.SaveChangesAsync();
 
             return CreatedAtAction(
                 nameof(GetById),
@@ -54,9 +55,9 @@ namespace denauncebeast2.API.Controllers
         }
 
         [HttpPut("{id}")]
-        public IActionResult Update(int id, Municipality municipality)
+        public async Task<IActionResult> Update(int id, Municipality municipality)
         {
-            var existing = _municipalities.FirstOrDefault(m => m.Id == id);
+            var existing = await _context.Municipalities.FindAsync(id);
             if (existing == null)
             {
                 return NotFound();
@@ -66,19 +67,24 @@ namespace denauncebeast2.API.Controllers
             existing.PostalCode = municipality.PostalCode;
             existing.IsActive = municipality.IsActive;
 
+            _context.Municipalities.Update(existing);
+            await _context.SaveChangesAsync();
+
             return NoContent();
         }
 
         [HttpDelete("{id}")]
-        public IActionResult Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
-            var existing = _municipalities.FirstOrDefault(m => m.Id == id);
+            var existing = await _context.Municipalities.FindAsync(id);
             if (existing == null)
             {
                 return NotFound();
             }
 
-            _municipalities.Remove(existing);
+            _context.Municipalities.Remove(existing);
+            await _context.SaveChangesAsync();
+
             return NoContent();
         }
     }
